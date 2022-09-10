@@ -129,7 +129,7 @@ class DiscordBot(
             actionRow {
                 textInput(TextInputStyle.Short, "username", "Školní username") {
                     allowedLength = 6..6
-                    placeholder = "Např. vrbj04"
+                    placeholder = "Např. user09"
                     required = true
                 }
             }
