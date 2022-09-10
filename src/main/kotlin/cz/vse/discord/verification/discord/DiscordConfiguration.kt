@@ -7,5 +7,7 @@ import org.springframework.boot.context.properties.ConstructorBinding
 @ConfigurationProperties(prefix = "discord")
 data class DiscordConfiguration(
     val token: String,
-    val confirmationChannel: Long
+    val guild: Long,
+    val confirmationChannel: Long,
+    val verifiedRole: Long
 )

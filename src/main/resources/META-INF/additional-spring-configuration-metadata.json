@@ -5,7 +5,15 @@
       "type": "java.lang.String"
     },
     {
+      "name": "discord.guild",
+      "type": "java.lang.Long"
+    },
+    {
       "name": "discord.confirmation-channel",
+      "type": "java.lang.Long"
+    },
+    {
+      "name": "discord.verified-role",
       "type": "java.lang.Long"
     }
   ]

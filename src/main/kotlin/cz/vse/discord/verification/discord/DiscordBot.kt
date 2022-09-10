@@ -1,18 +1,14 @@
 package cz.vse.discord.verification.discord
 
 import cz.vse.discord.verification.service.VerificationService
-import dev.kord.cache.api.data.description
 import dev.kord.common.Color
-import dev.kord.common.entity.ButtonStyle
-import dev.kord.common.entity.ChannelType
-import dev.kord.common.entity.Permission
-import dev.kord.common.entity.TextInputStyle
+import dev.kord.common.entity.*
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.asChannelOf
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.behavior.interaction.modal
-import dev.kord.core.behavior.interaction.respondEphemeral
 import dev.kord.core.behavior.interaction.response.respond
+import dev.kord.core.entity.User
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
@@ -73,7 +69,7 @@ class DiscordBot(
             when (interaction.componentId) {
                 "verification" -> displayVerificationModal(interaction)
                 "complete-verification" -> displayCodeModal(interaction)
-                else -> logger.error("Unknown button interaction [${interaction.componentId}]")
+                else -> completeMemberVerification(interaction)
             }
         }
 
@@ -110,7 +106,6 @@ class DiscordBot(
         val deferred = interaction.deferEphemeralResponse()
         val username = service.completeVerification(code)
 
-        // TODO: Assign role to the user
         if (username == null) {
             deferred.respond {
                 embed {
@@ -123,6 +118,8 @@ class DiscordBot(
             return
         }
 
+        createConfirmationMessage(username, interaction.kord, interaction.user)
+
         deferred.respond {
             embed {
                 color = Color(0x57F287)
@@ -130,7 +127,26 @@ class DiscordBot(
                 description = "Během chvíle ti bude přidělena role, která odemyká plný přístup na server"
             }
         }
+    }
 
+    private suspend fun createConfirmationMessage(username: String, client: Kord, user: User) {
+        val channel = client.getChannelOf<TextChannel>(Snowflake(configuration.confirmationChannel))
+
+        channel?.createMessage {
+            embed {
+                title = "Potvrzení verifikace"
+                description = "Pro potvrzení a přidělení role uživateli je potřeba potvrdit verifikaci"
+
+                field("Member", false) { user.mention }
+                field("VŠE účet", false) { username }
+            }
+
+            actionRow {
+                interactionButton(ButtonStyle.Success, "confirm:${user.id}") {
+                    label = "Legit"
+                }
+            }
+        }
     }
 
     private suspend fun createVerificationMessage(interaction: GuildChatInputCommandInteraction) {
@@ -203,6 +219,23 @@ class DiscordBot(
                     placeholder = "Např. lpUYpbobZlz81EqFB6ljLPPG6MJbg5RH"
                     required = true
                 }
+            }
+        }
+    }
+
+    private suspend fun completeMemberVerification(interaction: ButtonInteraction) {
+        val deferred = interaction.deferPublicResponse()
+
+        val (_, id) = interaction.componentId.split(":")
+
+        val guild = interaction.kord.getGuild(Snowflake(configuration.guild)) ?: return
+        val member = guild.getMember(Snowflake(id)).asMember()
+
+        member.addRole(Snowflake(configuration.verifiedRole))
+        deferred.respond {
+            embed {
+                color = Color(0x57F287)
+                title = "Role byla přidělena"
             }
         }
     }

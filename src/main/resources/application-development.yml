@@ -3,4 +3,6 @@ spring:
     host: smtp.mailtrap.io
 
 discord:
+  guild: 932728712355512331
   confirmation-channel: 1018219687491940393
+  verified-role: 1009567641507221524
