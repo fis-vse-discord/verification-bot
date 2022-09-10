@@ -1,6 +1,7 @@
 package cz.vse.discord.verification.discord
 
 import cz.vse.discord.verification.service.VerificationService
+import dev.kord.cache.api.data.description
 import dev.kord.common.Color
 import dev.kord.common.entity.ButtonStyle
 import dev.kord.common.entity.ChannelType
@@ -10,13 +11,16 @@ import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.asChannelOf
 import dev.kord.core.behavior.channel.createMessage
 import dev.kord.core.behavior.interaction.modal
+import dev.kord.core.behavior.interaction.respondEphemeral
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.channel.TextChannel
 import dev.kord.core.entity.interaction.ButtonInteraction
 import dev.kord.core.entity.interaction.GuildChatInputCommandInteraction
+import dev.kord.core.entity.interaction.ModalSubmitInteraction
 import dev.kord.core.event.gateway.ReadyEvent
 import dev.kord.core.event.interaction.ButtonInteractionCreateEvent
 import dev.kord.core.event.interaction.GuildChatInputCommandInteractionCreateEvent
+import dev.kord.core.event.interaction.ModalSubmitInteractionCreateEvent
 import dev.kord.core.on
 import dev.kord.rest.builder.interaction.channel
 import dev.kord.rest.builder.message.create.actionRow
@@ -68,9 +72,65 @@ class DiscordBot(
         client.on<ButtonInteractionCreateEvent> {
             when (interaction.componentId) {
                 "verification" -> displayVerificationModal(interaction)
+                "complete-verification" -> displayCodeModal(interaction)
                 else -> logger.error("Unknown button interaction [${interaction.componentId}]")
             }
         }
+
+        client.on<ModalSubmitInteractionCreateEvent> {
+            when (interaction.modalId) {
+                "username-prompt" -> handleUsernameModal(interaction, interaction.textInputs["username"]?.value ?: "")
+                "code-prompt" -> handleCodeModal(interaction, interaction.textInputs["code"]?.value ?: "")
+
+                else -> logger.error("Unknown modal interaction [${interaction.modalId}]")
+            }
+        }
+    }
+
+    private suspend fun handleUsernameModal(interaction: ModalSubmitInteraction, username: String) {
+        val deferred = interaction.deferEphemeralResponse()
+        val verification = service.createVerification(username)
+
+        deferred.respond {
+            embed {
+                color = Color(0x57F287)
+                title = "Na školní email ti byl zaslán email s ověřovacím kódem"
+                description = """
+                    Často se stává, že tento email skončí ve spamu, protože nepochází z domény vse.cz
+                    Po obržení kódu klikni na tlačítko **Dokončení verifikaci**, kde můžeš tento kód zadat.
+                """.trimIndent()
+                footer {
+                    text = "${verification.username}@vse.cz"
+                }
+            }
+        }
+    }
+
+    private suspend fun handleCodeModal(interaction: ModalSubmitInteraction, code: String) {
+        val deferred = interaction.deferEphemeralResponse()
+        val username = service.completeVerification(code)
+
+        // TODO: Assign role to the user
+        if (username == null) {
+            deferred.respond {
+                embed {
+                    color = Color(0xED4245)
+                    title = "Zadaný kód není platný"
+                    description = "Pokud problém přetrvá, zkus si nechat zaslat nový kód, nebo napiš někomu z administrátorů"
+                }
+            }
+
+            return
+        }
+
+        deferred.respond {
+            embed {
+                color = Color(0x57F287)
+                title = "Tvůj VŠE účet byl ověřen"
+                description = "Během chvíle ti bude přidělena role, která odemyká plný přístup na server"
+            }
+        }
+
     }
 
     private suspend fun createVerificationMessage(interaction: GuildChatInputCommandInteraction) {
@@ -97,7 +157,7 @@ class DiscordBot(
                 color = Color(0x009ee0)
                 title = "Verifikace školního účtu VŠE pro zpřístupnění serveru"
                 description = """
-                    |Pro zahájení verifikace klikni na tlačítko pod touto zprávou.
+                    |Pro zahájení verifikace klikni na tlačítko **Ověření školního účtu** pod touto zprávou.
                     |
                     |Po zadání školního emailu ti bude zaslán email s ověřovacím kódem
                     |
@@ -110,26 +170,37 @@ class DiscordBot(
             }
 
             actionRow {
-                interactionButton(ButtonStyle.Primary, "verification") {
-                    label = "\uD83D\uDD11 Ověření školního účtu"
-                }
+                interactionButton(ButtonStyle.Primary, "verification") { label = "\uD83D\uDD11 Ověření školního účtu" }
+                interactionButton(ButtonStyle.Secondary, "complete-verification") { label = "Dokončení verifikace" }
             }
         }
 
         response.respond {
             embed {
-                color = Color(0x49a72c)
+                color = Color(0x57F287)
                 title = "Verification message created"
             }
         }
     }
 
     private suspend fun displayVerificationModal(interaction: ButtonInteraction) {
-        interaction.modal("Ověření školního účtu VŠE", "verification-prompt") {
+        interaction.modal("Ověření školního účtu VŠE", "username-prompt") {
             actionRow {
                 textInput(TextInputStyle.Short, "username", "Školní username") {
                     allowedLength = 6..6
                     placeholder = "Např. user09"
+                    required = true
+                }
+            }
+        }
+    }
+
+    private suspend fun displayCodeModal(interaction: ButtonInteraction) {
+        interaction.modal("Dokončení ověření školního účtu VŠE", "code-prompt") {
+            actionRow {
+                textInput(TextInputStyle.Short, "code", "Zaslaný verifikační kód") {
+                    allowedLength = 32..32
+                    placeholder = "Např. lpUYpbobZlz81EqFB6ljLPPG6MJbg5RH"
                     required = true
                 }
             }

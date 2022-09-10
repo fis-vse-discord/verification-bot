@@ -9,4 +9,6 @@ interface PendingVerificationRepository : CoroutineCrudRepository<PendingVerific
 
     suspend fun deleteAllByUsername(username: String)
 
+    suspend fun findByCode(code: String): PendingVerification?
+
 }

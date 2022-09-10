@@ -36,8 +36,17 @@ class VerificationService(
         return verification
     }
 
+    suspend fun completeVerification(code: String): String? {
+        val verification = repository.findByCode(code) ?: return null
+        val username = verification.username
+
+        repository.delete(verification)
+
+        return username
+    }
+
     @Suppress("UsePropertyAccessSyntax")
-    fun sendEmailWithCode(email: String, code: String) {
+    private fun sendEmailWithCode(email: String, code: String) {
         val template = "email/code"
         val context = Context().apply {
             setVariable("email", email)
