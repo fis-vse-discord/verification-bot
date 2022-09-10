@@ -1,1 +1,6 @@
-
+spring:
+  mail:
+    host: ${MAIL_HOST:smtp.eu.mailgun.org}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    test-connection: true
