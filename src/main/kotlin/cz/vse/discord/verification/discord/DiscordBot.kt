@@ -127,9 +127,9 @@ class DiscordBot(
     private suspend fun displayVerificationModal(interaction: ButtonInteraction) {
         interaction.modal("Ověření školního účtu VŠE", "verification-prompt") {
             actionRow {
-                textInput(TextInputStyle.Short, "username", "Školní username, např. vrbj04") {
+                textInput(TextInputStyle.Short, "username", "Školní username") {
                     allowedLength = 6..6
-                    placeholder = "vrbj04"
+                    placeholder = "Např. vrbj04"
                     required = true
                 }
             }
