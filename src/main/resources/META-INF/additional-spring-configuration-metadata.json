@@ -1,0 +1,12 @@
+{
+  "properties": [
+    {
+      "name": "discord.token",
+      "type": "java.lang.String"
+    },
+    {
+      "name": "discord.confirmation-channel",
+      "type": "java.lang.Long"
+    }
+  ]
+}

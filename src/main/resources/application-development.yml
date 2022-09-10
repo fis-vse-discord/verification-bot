@@ -1,3 +1,6 @@
 spring:
   mail:
     host: smtp.mailtrap.io
+
+discord:
+  confirmation-channel: 1018219687491940393

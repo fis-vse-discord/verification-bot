@@ -8,3 +8,7 @@ spring:
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     test-connection: true
+
+discord:
+  token: ${DISCORD_TOKEN}
+  confirmation-channel: ${DISCORD_CONFIRMATION_CHANNEL:1018219048028340284}
