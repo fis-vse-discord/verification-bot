@@ -23,9 +23,12 @@ class VerificationService(
         val email = "$username@vse.cz"
         val code = generateVerificationCode()
 
-        val verification = PendingVerification(username, code)
+        val verification = PendingVerification(
+            username = username,
+            code = code
+        )
 
-        repository.deleteById(username)
+        repository.deleteAllByUsername(username)
         repository.save(verification)
 
         sendEmailWithCode(email, code)
@@ -55,7 +58,7 @@ class VerificationService(
     private fun generateVerificationCode(): String {
         val seed = ByteBuffer.wrap(SecureRandom.getSeed(Long.SIZE_BYTES)).long
         val random = Random(seed)
-        val charset = ('0' .. '9') + ('a' .. 'z') + ('A' ..  'Z')
+        val charset = ('0'..'9') + ('a'..'z') + ('A'..'Z')
 
         return generateSequence { charset.random(random) }
             .take(32)

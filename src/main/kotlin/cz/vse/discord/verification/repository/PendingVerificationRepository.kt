@@ -5,4 +5,8 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface PendingVerificationRepository : CoroutineCrudRepository<PendingVerification, String>
+interface PendingVerificationRepository : CoroutineCrudRepository<PendingVerification, String> {
+
+    suspend fun deleteAllByUsername(username: String)
+
+}

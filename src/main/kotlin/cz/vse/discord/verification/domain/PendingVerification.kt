@@ -7,6 +7,9 @@ import org.springframework.data.relational.core.mapping.Table
 @Table("pending_verifications")
 data class PendingVerification(
     @Id
+    @Column("id")
+    val id: Int = 0,
+
     @Column("username")
     val username: String,
 
