@@ -87,6 +87,19 @@ class DiscordBot(
 
     private suspend fun handleUsernameModal(interaction: ModalSubmitInteraction, username: String) {
         val deferred = interaction.deferEphemeralResponse()
+
+        if (!username.matches("[a-z]+[a-z0-9]+".toRegex())) {
+            deferred.respond {
+                embed {
+                    color = Color(0xED4245)
+                    title = "Neplatný formát školního emailu"
+                    description = "Zadej username ve formátu, kterým se přihlašuješ do insisu, tedy např. `user00`"
+                }
+            }
+
+            return
+        }
+
         val verification = service.createVerification(username)
 
         deferred.respond {
