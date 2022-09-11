@@ -175,8 +175,7 @@ class DiscordBot(
             response.respond {
                 embed {
                     color = Color(0xED4245)
-                    title = "This command is available to admins only"
-                    description = "For more info check 1984 by George Orwell"
+                    title = "Tento příkaz je dostupný pouze pro správce serveru"
                 }
             }
 
