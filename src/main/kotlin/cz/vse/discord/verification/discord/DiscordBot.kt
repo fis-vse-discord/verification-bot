@@ -263,9 +263,6 @@ class DiscordBot(
             embed {
                 color = Color(0x57F287)
                 title = "Role byla přidělena"
-                field("Povrdil", false) {
-                    interaction.user.mention
-                }
             }
         }
     }
