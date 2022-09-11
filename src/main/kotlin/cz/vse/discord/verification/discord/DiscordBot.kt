@@ -6,6 +6,7 @@ import dev.kord.common.entity.*
 import dev.kord.core.Kord
 import dev.kord.core.behavior.channel.asChannelOf
 import dev.kord.core.behavior.channel.createMessage
+import dev.kord.core.behavior.edit
 import dev.kord.core.behavior.interaction.modal
 import dev.kord.core.behavior.interaction.response.respond
 import dev.kord.core.entity.User
@@ -21,6 +22,7 @@ import dev.kord.core.on
 import dev.kord.rest.builder.interaction.channel
 import dev.kord.rest.builder.message.create.actionRow
 import dev.kord.rest.builder.message.create.embed
+import dev.kord.rest.builder.message.modify.actionRow
 import dev.kord.rest.builder.message.modify.embed
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
@@ -224,18 +226,33 @@ class DiscordBot(
     }
 
     private suspend fun completeMemberVerification(interaction: ButtonInteraction) {
-        val deferred = interaction.deferPublicResponse()
+        val deferred = interaction.deferEphemeralResponse()
+        val original = interaction.message
 
         val (_, id) = interaction.componentId.split(":")
 
         val guild = interaction.kord.getGuild(Snowflake(configuration.guild)) ?: return
         val member = guild.getMember(Snowflake(id)).asMember()
 
+
         member.addRole(Snowflake(configuration.verifiedRole))
+
+        original.edit {
+            actionRow {
+                interactionButton(ButtonStyle.Success, "confirmed") {
+                    label = "Potvrzeno od " + interaction.user.username
+                    disabled = true
+                }
+            }
+        }
+
         deferred.respond {
             embed {
                 color = Color(0x57F287)
                 title = "Role byla přidělena"
+                field("Povrdil", false) {
+                    interaction.user.mention
+                }
             }
         }
     }
